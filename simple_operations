@@ -1,0 +1,40 @@
+import requests
+import pandas as pd
+import matplotlib.pyplot as plt
+import datetime
+
+def get_yearly_rates(amount, curr, conv_curr, amnt_days):
+    today_date = datetime.datetime.now()
+    date_1year = (today_date - datetime.timedelta(days=1 * amnt_days))
+
+    #requests
+    url = f'https://api.exchangerate.host/timeseries'
+    payload = {'base': curr, 'amount':amount,'start_date':date_1year.date(),'end_date':today_date.date()}
+    response = requests.get(url, params=payload)
+    data = response.json()
+
+    #Dictionary to store data
+    currency_hist = {}
+    rate_hist_array = []
+
+    for item in data['rates']:
+        current_date = item
+        currency_rate = data['rates'][item][conv_curr]
+
+        currency_hist[current_date] = [currency_rate]
+        rate_hist_array.append(currency_rate)
+
+    #Clean Data
+    pd_data = pd.DataFrame(currency_hist).transpose()
+    pd_data.columns = ['Rate']
+    pd.set_option('display.max_rows', None)
+    print(pd_data)
+
+    #Data Plot
+    plt.plot(rate_hist_array)
+    plt.ylabel(f'{amount} {curr} to {conv_curr}')
+    plt.xlabel('Days')
+    plt.title(f'Current Rate for {amount} {curr} to {conv_curr} is {rate_hist_array[-1]}')
+    plt.show()
+
+get_yearly_rates(1, "EUR", "GBP",90)
